@@ -135,7 +135,7 @@ camera.position.set(0, 0, 2);
 const controls = new OrbitControls(camera, document.querySelector("#myCanvas"));
 // 滑らかにカメラコントローラーを制御する
 controls.enableDamping = true;
-controls.dampingFactor = 0.1;
+controls.dampingFactor = 0.2;
 
 
 const material = createMatcapMaterial("../texture/matcap3.png");
