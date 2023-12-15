@@ -11,9 +11,11 @@ const height = 900;
 const BOUNDING_BOX_FRAME_NAME = "BoundingBoxFrame"
 
 // 変数定義
-var model = null;
-var modelBoundingBox = null;
+var currentModel = null;
+var currentModelBoundingBox = null;
+var currentModelBoudingBoxSize = null;
 var scene = null;
+var camera = null;
 
 function createMeshPhongMaterial()
 {
@@ -39,13 +41,23 @@ function getBoundingBox(mesh)
     return mesh.geometry.boundingBox;
 }
 
+// モデルが中心にあることを前提に、カメラがモデル全体を映すちょうどいいくらいの位置に調整
+function resetCameraPosAtModelFront()
+{
+    if( (camera != null) && (currentModelBoudingBoxSize != null) ){
+        const zpos = calculateCameraPosToFitModel(camera, currentModelBoudingBoxSize);
+        camera.position.set(0, 0, zpos);
+    }
+}
+
 function setupGUI()
 {
     const gui = new GUI();
 
     var obj = {
         FileName : 'lil-gui',
-        ShowBoundingBox : true
+        ShowBoundingBox : true,
+        ResetCamera : resetCameraPosAtModelFront,
     };
 
     gui.add( obj, 'FileName' );
@@ -61,6 +73,7 @@ function setupGUI()
             bb.visible = value;
         }
     });
+    gui.add( obj, 'ResetCamera' );
 
     return gui;
 }
@@ -114,7 +127,7 @@ scene = new THREE.Scene();
 
 // カメラを作成
 // new THREE.PerspectiveCamera(視野角, アスペクト比, near, far)
-const camera = new THREE.PerspectiveCamera(45, width / height, 0.02, 1000);
+camera = new THREE.PerspectiveCamera(45, width / height, 0.02, 1000);
 // 焦点距離設定
 camera.setFocalLength(50);
 camera.position.set(0, 0, 2);
@@ -185,11 +198,13 @@ fbxLoader.load(
         //cube.position.set(-centre.x, -centre.y, -centre.z);
         scene.add( bbox_cube );
         
-        // モデルが中心にあることを前提に、カメラがモデル全体を映すちょうどいいくらいの位置に調整
-        const zpos = calculateCameraPosToFitModel(camera, model_bbox_size);
-        camera.position.set(0, 0, zpos);
-
         scene.add(object);
+
+        // グローバル変数にセット
+        currentModelBoudingBoxSize = model_bbox_size;
+
+        // モデルが中心にあることを前提に、カメラがモデル全体を映すちょうどいいくらいの位置に調整
+        resetCameraPosAtModelFront();
     },
     (xhr) => {
         console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
