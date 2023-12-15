@@ -2,6 +2,18 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
 import { MatcapShader } from './MatcapShader.js'
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+// 定数定義
+// サイズを指定
+const width = 1440;
+const height = 900;
+const BOUNDING_BOX_FRAME_NAME = "BoundingBoxFrame"
+
+// 変数定義
+var model = null;
+var modelBoundingBox = null;
+var scene = null;
 
 function createMeshPhongMaterial()
 {
@@ -11,10 +23,10 @@ function createMeshPhongMaterial()
     return material;
 }
 
-function createMatcapMaterial(image)
+function createMatcapMaterial(image_file_path)
 {
-    console.log( 'load image: %s', image );
-    const matcapTexture = new THREE.TextureLoader().load(image);
+    console.log( 'load image: %s', image_file_path );
+    const matcapTexture = new THREE.TextureLoader().load(image_file_path);
     const material = new THREE.ShaderMaterial(MatcapShader);
     material.uniforms.matcap.value = matcapTexture;
 
@@ -25,6 +37,32 @@ function getBoundingBox(mesh)
 {
     mesh.geometry.computeBoundingBox();
     return mesh.geometry.boundingBox;
+}
+
+function setupGUI()
+{
+    const gui = new GUI();
+
+    var obj = {
+        FileName : 'lil-gui',
+        ShowBoundingBox : true
+    };
+
+    gui.add( obj, 'FileName' );
+    gui.add( obj, 'ShowBoundingBox' ).onChange( (value) => {
+        var bb = null;
+        scene.traverse( (child) => {
+            if( child.name == BOUNDING_BOX_FRAME_NAME ){
+                bb = child;
+            }
+        })
+
+        if( bb != null ){
+            bb.visible = value;
+        }
+    });
+
+    return gui;
 }
 
 function calculateBoundingBoxFitAllMesh(bbox)
@@ -54,9 +92,14 @@ function calculateCameraPosToFitModel(camera, model_bbox)
     return ((max_edge_xy / 2.0) / fov_rad) + (model_bbox.z / 2);
 }
 
-// サイズを指定
-const width = 1440;
-const height = 900;
+
+
+// 
+// main ここから
+//
+
+// GUI作成
+const gui = setupGUI();
 
 // レンダラーを作成
 const renderer = new THREE.WebGLRenderer({
@@ -67,20 +110,19 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(width, height);
 
 // シーンを作成
-const scene = new THREE.Scene();
+scene = new THREE.Scene();
 
 // カメラを作成
 // new THREE.PerspectiveCamera(視野角, アスペクト比, near, far)
-const camera = new THREE.PerspectiveCamera(45, width / height, 0.0001, 1000);
+const camera = new THREE.PerspectiveCamera(45, width / height, 0.02, 1000);
 // 焦点距離設定
 camera.setFocalLength(50);
 camera.position.set(0, 0, 2);
 // カメラコントローラーを作成
-const controls = new OrbitControls(camera, document.body);
+const controls = new OrbitControls(camera, document.querySelector("#myCanvas"));
 // 滑らかにカメラコントローラーを制御する
-// これ有効にすると画面ちらちらするので使わない
-//controls.enableDamping = true;
-//controls.dampingFactor = 0.2;
+controls.enableDamping = true;
+controls.dampingFactor = 0.1;
 
 
 const material = createMatcapMaterial("../texture/matcap3.png");
@@ -136,8 +178,9 @@ fbxLoader.load(
         
         // バウンディングボックスのワイヤフレーム表示
         const bbox_geometory = new THREE.BoxGeometry( model_bbox_size.x, model_bbox_size.y, model_bbox_size.z );
-        const bbox_material = new THREE.MeshBasicMaterial( {color: 0x00ff00, wireframe: true} ); 
+        const bbox_material = new THREE.MeshBasicMaterial( {color: 0x00FF00, wireframe: true} ); 
         const bbox_cube = new THREE.Mesh( bbox_geometory, bbox_material ); 
+        bbox_cube.name = BOUNDING_BOX_FRAME_NAME;
         // ワイヤフレームはちょうど真ん中に設置されるので移動する必要なし
         //cube.position.set(-centre.x, -centre.y, -centre.z);
         scene.add( bbox_cube );
@@ -178,9 +221,12 @@ tick();
 
 // 毎フレーム時に実行されるループイベント
 function tick() {
+    // GUI更新
+    gui.controllersRecursive().forEach((controller) => {
+        controller.updateDisplay();
+    });
     // カメラコントローラーを更新
     controls.update();
-
     // レンダリング
     renderer.render(scene, camera);
 
