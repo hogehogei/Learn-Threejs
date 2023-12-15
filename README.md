@@ -2,18 +2,18 @@ ZBrushで作成したモデルを表示するWebページ<br>
 3Dプリント用モデルを試しに閲覧する想定<br>
 モデルは単一のマテリアルで表示し、テクスチャは考慮しない<br>
 
-**画面**
+## 画面
 ![Capture](capture.png)
 
 個人用メモ<br>
 
-**環境構築**<br>
+## 環境構築
 ```
 $ npm install http-server
 $ http-server
 ```
 
-**ZBrush export files**<br>
+## ZBrush export files
 1. 表示モデルを1つのサブツールにマージ<br>
    *Zplugin -> SubTool Master -> Merge*<br>
    MergeOnly にチェック<br>
@@ -22,5 +22,5 @@ $ http-server
    1 で一体化しているので型も考慮しない感じにしておくと〇<br>
 3. *Zplugin -> FBX ExportImport* でモデルエクスポート<br>
 
-**要調査**<br>
+## 要調査
 Three.js 内でロードするモデルを盗まれないようにするにはどうすればよいか？<br>
