@@ -8,8 +8,10 @@ ZBrushで作成したモデルを表示するWebページ<br>
 個人用メモ<br>
 
 **環境構築**<br>
-$ npm install http-server<br>
-$ http-server<br>
+```
+$ npm install http-server
+$ http-server
+```
 
 **ZBrush export files**<br>
 1. 表示モデルを1つのサブツールにマージ<br>
