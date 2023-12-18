@@ -10,12 +10,19 @@ const width = 1440;
 const height = 900;
 const BOUNDING_BOX_FRAME_NAME = "BoundingBoxFrame"
 
+const MATCAP_MATERIAL = [
+    "matcap3.png",
+    "matcap.png",
+    "gel2.png"
+];
+
 // 変数定義
 var currentModel = null;
 var currentModelBoundingBox = null;
 var currentModelBoudingBoxSize = null;
 var scene = null;
 var camera = null;
+
 
 function createMeshPhongMaterial()
 {
@@ -57,6 +64,7 @@ function setupGUI()
     var obj = {
         FileName : 'lil-gui',
         ShowBoundingBox : true,
+        MatcapMaterial: MATCAP_MATERIAL[0],
         ResetCamera : resetCameraPosAtModelFront,
     };
 
@@ -72,6 +80,18 @@ function setupGUI()
         if( bb != null ){
             bb.visible = value;
         }
+    });
+    gui.add( obj, 'MatcapMaterial', MATCAP_MATERIAL ).onChange( (value) => {
+        if( currentModel == null ){
+            return;
+        }
+        
+        const material = createMatcapMaterial("../texture/" + value);
+        currentModel.traverse( (child) => {
+            if( child.isMesh ){
+                child.material = material;
+            }
+        });
     });
     gui.add( obj, 'ResetCamera' );
 
@@ -201,6 +221,7 @@ fbxLoader.load(
         scene.add(object);
 
         // グローバル変数にセット
+        currentModel = object;
         currentModelBoudingBoxSize = model_bbox_size;
 
         // モデルが中心にあることを前提に、カメラがモデル全体を映すちょうどいいくらいの位置に調整
